@@ -14,12 +14,14 @@ var doneCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		id, _ := strconv.Atoi(args[0])
+
 		err := service.MarkTaskDone(id)
 		if err != nil {
-			fmt.Println("Error :", err)
-		} else {
-			fmt.Println("Task marked as done")
+			fmt.Println("Error:", err)
+			return
 		}
+
+		fmt.Println("Task marked as done")
 	},
 }
 

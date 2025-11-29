@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"strings"
+
+	"project-app-todo-list-cli-rafli-nur-rahman/model"
 	"project-app-todo-list-cli-rafli-nur-rahman/service"
 
 	"github.com/spf13/cobra"
@@ -9,10 +13,30 @@ import (
 var searchCmd = &cobra.Command{
 	Use:   "search [keyword]",
 	Short: "Search tasks by keyword",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		keyword := args[0]           // <-- fix: ambil dari argumen
-		service.SearchTasks(keyword) // <-- fix: pakai variabel
+		if len(args) < 1 {
+			fmt.Println("Please provide a keyword to search!")
+			return
+		}
+
+		keyword := strings.Join(args, " ")
+
+		allTasks := service.GetAllTasks()
+		var results []model.Task
+
+		for _, t := range allTasks {
+			if strings.Contains(strings.ToLower(t.Title), strings.ToLower(keyword)) ||
+				strings.Contains(strings.ToLower(t.Description), strings.ToLower(keyword)) {
+				results = append(results, t)
+			}
+		}
+
+		if len(results) == 0 {
+			fmt.Println("No tasks found.")
+			return
+		}
+
+		displayTasks(results)
 	},
 }
 

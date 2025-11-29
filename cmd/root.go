@@ -9,7 +9,6 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "todo",
 	Short: "A simple CLI Todo application",
-	Long:  `A simple CLI Todo application to manage your tasks.`,
 }
 
 func Execute() {

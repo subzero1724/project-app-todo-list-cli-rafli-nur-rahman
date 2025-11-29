@@ -16,6 +16,7 @@ var dataFile = "data/tasks.json"
 // Load tasks from JSON file
 func load() ([]model.Task, error) {
 	var tasks []model.Task
+
 	if _, err := os.Stat(dataFile); os.IsNotExist(err) {
 		return tasks, nil
 	}
@@ -35,7 +36,7 @@ func AddTask(title, description string) error {
 
 	// Avoid duplicate titles
 	for _, t := range tasks {
-		if t.Title == title {
+		if strings.EqualFold(t.Title, title) {
 			return errors.New("task with the same title already exists")
 		}
 	}
@@ -49,8 +50,8 @@ func AddTask(title, description string) error {
 		ID:          id,
 		Title:       title,
 		Description: description,
-		Status:      "todo",   // <-- default
-		Priority:    "normal", // <-- default
+		Status:      "todo",
+		Priority:    "normal",
 		CreatedAt:   time.Now().Format(time.RFC3339),
 	}
 
@@ -58,7 +59,48 @@ func AddTask(title, description string) error {
 	return save(tasks)
 }
 
-// List tasks (pending only OR all)
+// Update task
+func UpdateTask(id int, title, desc, status, priority string) error {
+	tasks, err := load()
+	if err != nil {
+		return err
+	}
+
+	var found bool
+
+	for i, t := range tasks {
+		if t.ID == id {
+			found = true
+
+			if title != "" {
+				tasks[i].Title = title
+			}
+			if desc != "" {
+				tasks[i].Description = desc
+			}
+			if status != "" {
+				if status != "todo" && status != "done" {
+					return errors.New("status must be: todo / done")
+				}
+				tasks[i].Status = status
+			}
+			if priority != "" {
+				if priority != "low" && priority != "normal" && priority != "high" {
+					return errors.New("priority must be: low / normal / high")
+				}
+				tasks[i].Priority = priority
+			}
+		}
+	}
+
+	if !found {
+		return errors.New("task ID not found")
+	}
+
+	return save(tasks)
+}
+
+// List tasks (all or only todo)
 func ListTasks(all bool) {
 	tasks, _ := load()
 
@@ -69,12 +111,13 @@ func ListTasks(all bool) {
 		if !all && t.Status == "done" {
 			continue
 		}
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\n", t.ID, t.Title, t.Status, t.Priority, t.CreatedAt)
+		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\n",
+			t.ID, t.Title, t.Status, t.Priority, t.CreatedAt)
 	}
 	w.Flush()
 }
 
-// Mark task as done
+// Mark a task as done
 func MarkTaskDone(id int) error {
 	tasks, err := load()
 	if err != nil {
@@ -105,19 +148,24 @@ func DeleteTask(id int) error {
 	return errors.New("task not found")
 }
 
-// Search tasks by keyword
-func SearchTasks(keyword string) {
+// NEW — Search tasks by keyword (title or description)
+func SearchTasks(keyword string) []model.Task {
 	tasks, _ := load()
-	keyword = strings.ToLower(keyword)
+
+	var results []model.Task
+	key := strings.ToLower(keyword)
 
 	for _, t := range tasks {
-		if strings.Contains(strings.ToLower(t.Title), keyword) {
-			fmt.Println("- " + t.Title)
+		if strings.Contains(strings.ToLower(t.Title), key) ||
+			strings.Contains(strings.ToLower(t.Description), key) {
+			results = append(results, t)
 		}
 	}
+
+	return results
 }
 
-// Return all tasks as []model.Task
+// Return all tasks
 func GetAllTasks() []model.Task {
 	tasks, err := load()
 	if err != nil {
