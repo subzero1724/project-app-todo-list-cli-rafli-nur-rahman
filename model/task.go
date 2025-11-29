@@ -1,0 +1,10 @@
+package model
+
+type Task struct {
+	ID          int    `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Status      string `json:"status"`   // <-- TAMBAHKAN
+	Priority    string `json:"priority"` // <-- TAMBAHKAN
+	CreatedAt   string `json:"created_at"`
+}
